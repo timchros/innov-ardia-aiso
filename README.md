@@ -1,4 +1,4 @@
-# Abstraction Models (ARDIA) & AI-enhanced Service Orchestration (AISO)
+# Abstraction Models & AI-enhanced Service Orchestration (AISO)
 
 UNDER CONSTRUCTION
 
