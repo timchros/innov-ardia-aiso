@@ -1,0 +1,279 @@
+# ===========================================================================
+# Testing AI-enhanced Service Orchestrator (AISO) REST services 
+# ===========================================================================
+
+Successfully deployed to UVT cluster: 
+
+AISO = https://ai-enhanced-service-orchestrator.services.cloud.ict-serrano.eu/AISO
+
+
+Focus on the following Application Model parameters:
+ - Application_Performance_Response_Latency --> LOW | MEDIUM | HIGH
+ - Application_Performance_Total_Execution_Time --> LOW | MEDIUM | HIGH * works for "faaspositionclassifiertrainer"
+ - Energy_Consumption --> LOW | MEDIUM | HIGH  * works for "faaspositioninference"
+ - runtime_encryption --> yes | no
+ - runtime_isolation --> yes | no
+ 
+Resource Model parameters affected:
+ - node_type --> EDGE_DEVICE | CLOUD
+ - accelerator_type --> U50 | U200
+ - node_exec_capability --> Tier_0 | Tier_1 | Tier_2 | Tier_3 | Tier_4
+ - uc_app_params
+
+
+# ---------------------------------------------------------------------------
+# PART A: Focus on AISO "translation" mechanism i.e. Service Input & Output
+# ---------------------------------------------------------------------------
+# AISO service: CreateDeploymentScenarios
+# ---------------------------------------------------------------------------
+
+
+>> EXAMPLE 1: Provide only the deployment descriptor YAML without any additional constraint
+
+POST request to {AISO}/CreateDeploymentScenarios
+
+{
+  "user_id": "",
+  "deployment_descriptor_yaml": "Deployment-Descriptor-YAML-String",
+  "application_constraints": [
+  ],
+  "application_workflow": [  ]
+}
+
+Output: 
+
+{
+    "deployment_description": "Deployment-Descriptor-YAML-String",
+    "deployment_objectives": [],
+    "name": "AISO"
+}
+
+
+
+>> EXAMPLE 2: Application Response Latency affects node type (i.e., CLOUD OR EDGE_DEVICE)
+
+POST request to {AISO}/CreateDeploymentScenarios
+
+{
+  "user_id": "",
+  "deployment_descriptor_yaml": "Deployment-Descriptor-YAML-String",
+  "application_constraints": [
+    {
+      "Application_Performance_Response_Latency": "LOW"
+    }
+  ],
+  "application_workflow": [  ]
+}
+
+Output: 
+
+{
+    "deployment_description": "Deployment-Descriptor-YAML-String",
+    "deployment_objectives": [
+        {
+            "node_type": "EDGE_DEVICE",
+        }
+    ],
+    "name": "AISO"
+}
+
+>> EXAMPLE 3: Focus on the Total Execution Time of a particular micro-service  (a)
+
+POST request to {AISO}/CreateDeploymentScenarios
+
+{
+  "user_id": "",
+  "deployment_descriptor_yaml": "Deployment-Descriptor-YAML-String",
+  "application_constraints": [
+    {
+      "component_id": "faaspositionclassifiertrainer",
+      "Application_Performance_Total_Execution_Time": "LOW"
+    }
+  ],
+  "application_workflow": [  ]
+}
+
+Output: 
+
+{
+    "deployment_description": "Deployment-Descriptor-YAML-String",
+    "deployment_objectives": [
+        {
+            "component_id": "faaspositionclassifiertrainer",
+            "node_type": "CLOUD",
+        }
+    ],
+    "name": "AISO"
+}
+
+
+>> EXAMPLE 4: Focus on the Total Execution Time of a particular micro-service (b)
+
+POST request to {AISO}/CreateDeploymentScenarios
+
+{
+  "user_id": "",
+  "deployment_descriptor_yaml": "Deployment-Descriptor-YAML-String",
+  "application_constraints": [
+    {
+      "component_id": "faaspositionclassifiertrainer",
+      "Application_Performance_Total_Execution_Time": "</= 200 ms"
+    }
+  ],
+  "application_workflow": [  ]
+}
+
+Output:
+
+{
+    "deployment_description": "Deployment-Descriptor-YAML-String",
+    "deployment_objectives": [
+        {
+            "component_id": "faaspositionclassifiertrainer",
+            "node_type": "CLOUD",
+        },
+        {
+			"component_id": "faaspositionclassifiertrainer",
+            "node_type": "EDGE_DEVICE",
+            "uc_app_params": "no_data_batches < 150"
+        }
+    ],
+    "name": "AISO"
+}
+
+
+>> EXAMPLE 5: Focus on the Total Energy Consumption of a particular micro-service
+
+POST request to {AISO}/CreateDeploymentScenarios
+
+{
+  "user_id": "",
+  "deployment_descriptor_yaml": "Deployment-Descriptor-YAML-String",
+  "application_constraints": [
+    {
+      "component_id": "faaspositioninference",
+      "Service_Level_Error_Margin": "</= 3 %",
+      "Service_Level_UpTime": ">/= 97 %",
+      "Energy_Consumption": "MEDIUM"
+    }
+  ],
+  "application_workflow": [  ]
+}
+
+Output:
+
+{
+    "deployment_description": "Deployment-Descriptor-YAML-String",
+    "deployment_objectives": [
+        {
+            "component_id": "faaspositioninference",
+            "node_type": "EDGE_DEVICE",
+			"accelerator_type": "U200"
+        }
+    ],
+    "name": "AISO"
+}
+
+
+>> EXAMPLE 6: Focus on the runtime capabilities of nodes
+
+POST request to {AISO}/CreateDeploymentScenarios
+
+{
+  "user_id": "",
+  "deployment_descriptor_yaml": "Deployment-Descriptor-YAML-String",
+  "application_constraints": [
+        {
+            "runtime_encryption": "yes",
+            "runtime_isolation":"yes"
+        }
+  ],
+  "application_workflow": [  ]
+}
+
+Output:
+
+{
+    "deployment_description": "Deployment-Descriptor-YAML-String",
+    "deployment_objectives": [
+        {
+            "node_exec_capability": "Tier_4",
+        }
+    ],
+    "name": "AISO"
+}
+
+
+# ---------------------------------------------------------------------------
+# PART B: Focus on the Interaction of the AISO with Resource Orchestrator (RO)
+# ---------------------------------------------------------------------------
+# AISO service: ApplicationDeploymentThroughRO & ApplicationManagement
+# ---------------------------------------------------------------------------
+
+
+>> EXAMPLE 7: Provide the Deployment Descriptor YAML and application constraints (if any) to RO and get back its response
+
+POST request to {AISO}/ApplicationDeploymentThroughRO
+
+{
+  "user_id": "",
+  "deployment_descriptor_yaml": "Deployment-Descriptor-YAML-String",
+  "application_constraints": [
+  ],
+  "application_workflow": [  ]
+}
+
+Output: 
+
+{
+    "deployment_uuid": "728c5330-d57a-44ba-acd3-4a7d537757d6"
+}
+
+
+>> EXAMPLE 8: Get more information about the deployment process based on the deployment UUID 
+
+POST request to {AISO}/ApplicationManagement
+
+{
+  "appid": "728c5330-d57a-44ba-acd3-4a7d537757d6",
+  "action": "Status"
+}
+
+Output:
+
+{
+    "msg": "{\"deployments\":[{\"name\":\"AISO\",\"user_token\":\"\",\"deployment_description\":\"Deployment-Descriptor-YAML-String\",\"deployment_objectives\":[],\"deployment_uuid\":\"728c5330-d57a-44ba-acd3-4a7d537757d6\",\"kind\":\"Deployment\",\"assignments\":[],\"assignments_status\":[],\"logs\":[{\"timestamp\":1702395516,\"event\":\"Deployment description received.\"},{\"timestamp\":1702395516,\"event\":\"Request ROT scheduling\"}],\"status\":2,\"updated_by\":\"Orchestration.Manager\",\"created_at\":1702395516,\"updated_at\":1702395516}]}"
+}
+
+
+>> EXAMPLE 9: Undeploy an Application (i.e., undo a deployment)
+
+POST request to {AISO}/ApplicationManagement
+
+{
+  "appid": "728c5330-d57a-44ba-acd3-4a7d537757d6",
+  "action": "Undeploy"
+}
+
+Output:
+
+{
+    "msg": "{}"
+}
+
+# ---------------------------------------------------------------------------
+# PART C: Focus on the Interaction of the AISO with Central Telemetry Handler (CTH)
+# ---------------------------------------------------------------------------
+# AISO service: GetDataFromCentralTelemetryHanlder
+# ---------------------------------------------------------------------------
+
+
+>> EXAMPLE 10: Ensure that interaction among AISO and CTH is taking place
+
+GET request to {AISO}/GetDataFromCentralTelemetryHanlder
+
+Output:
+
+{
+    "msg": "Success !"
+}

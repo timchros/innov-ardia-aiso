@@ -1,0 +1,386 @@
+swagger: '2.0'
+info:
+  version: 0.5.0
+  title: AI-enhanched Service Orchestrator API
+  description: >-
+    The AI-enhanced Service Orchestrator (AISO) is available as a service. 
+    This Open API (2.0) provides more information regarding the input/output 
+    of the available REST services.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+host: ponte.grid.ece.ntua.gr:8080
+basePath: /AISO
+tags:
+  - name: AI-SO
+    description: AI-enhanced Service Orchestrator Services
+schemes:
+  - http
+paths:
+  /CreateDeploymentScenarios:
+    post:
+      tags:
+        - AI-SO
+      description: >-
+        Returns possible Deployment Scenarios with the Application Parameters
+        expressed using the Resource Model elements. 
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          required: true
+          schema:
+            $ref: '#/definitions/ApplicationProfileData'
+      responses:
+        '200':
+          description: Successful response
+          schema:
+            type: object
+            properties:
+              name:
+                type: string
+              deployment_description: 
+                type: string
+              deployment_objectives:
+                type: array
+                items:
+                  $ref: '#/definitions/ResourceModelConstraints'
+        '400':
+          description: Invalid Input Data
+          schema:
+            $ref: '#/definitions/MsgDataModel'
+        '500':
+          description: Execution Problem
+          schema:
+            $ref: '#/definitions/MsgDataModel'  
+              
+  /ApplicationDeploymentThroughRO:
+    post:
+      tags:
+        - AI-SO
+      description: >-
+        Prepare possible Deployment Scenarios with the Application Parameters
+        expressed using the Resource Model elements and invokes Resource Orchestrator
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          required: true
+          schema:
+            $ref: '#/definitions/ApplicationProfileData'
+      responses:
+        '200':
+          description: Successful response
+          schema:
+            type: object
+            properties:
+              deployment_uuid:
+                type: string
+        '400':
+          description: Invalid Input Data
+          schema:
+            $ref: '#/definitions/MsgDataModel'
+        '500':
+          description: Execution Problem
+          schema:
+            $ref: '#/definitions/MsgDataModel'                
+
+  /ApplicationManagement:
+    post:
+      tags:
+        - AI-SO
+      description: >-
+        Enables authorized users to manage the application using their UID.
+      consumes:
+        - application/json
+      produces:
+        - application/json        
+      parameters:
+        - in: body
+          name: body
+          required: true
+          schema:
+            type: object
+            properties:
+              appid:
+                type: string  
+              action:
+                type: string  
+                enum:
+                  - STATUS
+                  - UNDEPLOY
+              params:
+                type: string
+      responses:
+        '200':
+          description: Successful response
+          schema:
+            $ref: '#/definitions/MsgDataModel'
+        '400':
+          description: Invalid Action
+          schema:
+            $ref: '#/definitions/MsgDataModel'
+        '500':
+          description: Execution Problem
+          schema:
+            $ref: '#/definitions/MsgDataModel'  
+      
+  /GetDataFromCentralTelemetryHanlder:
+    get:
+      tags:
+        - AI-SO
+      description: >-
+        This method is being used only for testing purposes and
+        in particular the interaction between AI-SO and the 
+        Central Telemetry Handler.
+      produces:
+        - application/json  
+      responses:
+        '200':
+          description: Successful response
+          schema:
+            $ref: '#/definitions/MsgDataModel'
+        '500':
+          description: Execution Problem
+          schema:
+            $ref: '#/definitions/MsgDataModel'         
+        
+        
+definitions:
+
+  ApplicationProfileData:
+    type: object
+    properties:
+
+      user_id:
+        type: string
+      
+      deployment_descriptor_yaml:
+        type: string
+      
+      application_constraints:
+        type: array
+        items:
+          $ref: '#/definitions/ComponentConstraintsModel'
+        minItems: 1
+        
+      application_workflow:
+        type: array
+        items:
+          $ref: '#/definitions/ComponentInteractionModel'
+          
+  ComponentConstraintsModel:
+    type: object
+    properties:
+          component_id:
+            type: string
+      
+          Usage_Demand_Total_Number_of_Users:
+            type: string
+          Usage_Demand_Number_of_Concurrent_Users:
+            type: string
+          Usage_Demand_Total_Number_of_Requests:
+            type: string      
+          Usage_Demand_Number_of_Concurrent_Requests:
+            type: string    
+          Usage_Demand_Number_of_Instances:
+            type: string
+          
+          Service_Level_UpTime:
+            type: string
+          Service_Level_MeanTime_to_Recovery:
+            type: string
+          Service_Level_Reliability_Overall:
+            type: string
+          Service_Level_Failure_Rate:
+            type: string
+          Service_Level_Error_Margin:
+            type: string
+          Service_Level_Confidence_Level:
+            type: string
+          
+          Application_Performance_Total_Execution_Time:
+            type: string      
+          Application_Performance_Response_Latency:
+            type: string      
+          Application_Performance_GPU:
+            type: string      
+          Application_Performance_FPGA:
+            type: string      
+          Application_Performance_Parallelization:
+            type: string      
+          
+          Data_Storage_Data_Type:
+            type: string
+          Data_Storage_Volume:
+            type: string
+          Data_Storage_Latency:
+            type: string
+          Data_Retrieval_Latency:
+            type: string
+          Data_Storage_Duration:
+            type: string
+          Data_Storage_Period_of_Time:
+            type: string
+          Data_Storage_Proximity_to_User:
+            type: string
+          Data_Storage_Geographical_Location:
+            type: string
+          
+          Network_Upload_Bandwidth:
+            type: string
+          Network_Download_Bandwidth:
+            type: string
+          Network_Latency:
+            type: string
+          
+          Data_Transfer_Input_Data_Type:
+            type: string
+          Data_Transfer_Input_Data_Volume:
+            type: string
+          Data_Transfer_Output_Data_Type:
+            type: string
+          Data_Transfer_Output_Data_Volume:
+            type: string
+          
+          Security_Data_Encryption_Parameters:
+            type: string
+          Security_Data_Data_Encryption_Algorithm:
+            type: string
+          Security_Erasure_Coding_Scheme:
+            type: string
+          Security_Erasure_Coding_Stripe_Size:
+            type: string
+          Security_Erasure_Coding_Level_of_Redundancy:
+            type: string
+          Privacy_Data_Nature:
+            type: string
+          Legal_Framework:
+            type: string  
+          
+          Energy_Consumption:
+            type: string
+          Overall_Cost:
+            type: string
+          Data_Storage_Cost:
+            type: string
+          Data_Access_Cost:
+            type: string
+          
+          Deployment_Duration_Overall:
+            type: string
+          Deployment_Duration_Scheduling:
+            type: string
+          
+          Technical_Details_Programming_Language:
+            type: string
+          Technical_Details_Operating_System:
+            type: string
+          Technical_Details_Software_Environment:
+            type: string
+          Technical_Details_Software_Dependencies:
+            type: array
+            items:
+              type: string
+          app_metadata:
+            type: string
+    
+          runtime_isolation:
+            type: string
+            enum:
+              - NO
+              - YES
+              - MINIMAL
+              - MAXIMAL
+          runtime_encryption:
+            type: string
+            enum:
+              - NO
+              - YES
+              - COULD_HAVE
+          runtime_spawn_time:
+            type: string
+            enum:
+              - FAIR
+              - FAST
+              - ULTRA_FAST
+              
+              
+  ComponentInteractionModel:
+    type: object
+    properties:
+    
+      component_id:
+        type: string
+        
+      input:
+        type: object
+        
+      output:
+        type: object
+        
+      previous_component_id:
+          type: array
+          items:
+            type: string
+        
+        
+  ResourceModelConstraints:
+    type: object
+    properties:
+      deployment_scenario_id:
+        type: string
+      component_id:
+        type: string
+      node_type:
+        type: string
+      node_cpu_cores:
+        type: string
+      node_cpu_threads:
+        type: string
+      node_cpu_architecture:
+        type: string
+      node_memory_size:
+        type: string
+      node_network_latency:
+        type: string
+      node_storage_size:
+        type: string
+      node_storage_encryption:
+        type: string
+      node_exec_capability:
+        type: string
+      hpc_numa_nodes:
+        type: string
+      accelerator_type:
+        type: string
+      accelerator_architecture:
+        type: string
+      gpu_cores:
+        type: string
+      gpu_capacity:
+        type: string
+      uc_app_params:
+        type: string
+
+        
+  TelemetryDataModel:
+    type: object
+    properties:
+      resource_id:
+        type: string
+      resource_data:
+        type: string
+
+  MsgDataModel:
+    type: object
+    properties:
+      msg:
+        type: string   
+      

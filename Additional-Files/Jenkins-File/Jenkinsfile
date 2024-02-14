@@ -1,0 +1,60 @@
+pipeline {
+    environment {
+        PROJECT_NAME = 'AI-enhanced-Service-Orchestrator'
+        DEPLOY = "${env.GIT_BRANCH == "origin/main" || env.GIT_BRANCH == "origin/develop" ? "true" : "false"}"
+        DEPLOY_UVT = "${env.GIT_BRANCH == "origin/main" ? "true" : "false"}"
+        CHART_NAME = "${env.GIT_BRANCH == "origin/master" ? "example" : "example-staging"}"
+        VERSION = readMavenPom().getVersion()
+        DOMAIN = 'localhost'
+        REGISTRY = 'serrano-harbor.rid-intrasoft.eu/serrano/ai-enhanced-service-orchestrator'
+        REGISTRY_URL = 'https://serrano-harbor.rid-intrasoft.eu/serrano'
+        REGISTRY_CREDENTIAL = 'harbor-jenkins'
+        UVT_KUBERNETES_PUBLIC_ADDRESS = 'api.k8s.cloud.ict-serrano.eu'
+        INTEGRATION_OPERATOR_TOKEN = credentials('uvt-integration-operator-token')
+    }
+    agent {
+        kubernetes {
+            cloud 'kubernetes'
+            defaultContainer 'jnlp'
+            yamlFile 'build.yaml'
+        }
+    }
+    stages {
+        stage('Generate BOM') {
+            steps {
+                container('maven') {
+                    sh 'mvn org.cyclonedx:cyclonedx-maven-plugin:makeBom'
+                }
+            }
+        }
+        stage('Dependency Track') {
+            steps {
+                container('maven') {
+                    dependencyTrackPublisher artifact: 'target/bom.xml', projectId: 'fe409a86-3cd7-4762-b49e-0b3a1cb45869', synchronous: true
+                }
+            }
+        }
+        stage('Docker Build') {
+            when {
+                environment name: 'DEPLOY', value: 'true'
+            }
+            steps {
+                container('docker') {
+                    sh "docker build -t ${REGISTRY}:${VERSION} ."
+                }
+            }
+        }
+        stage('Docker Publish') {
+            when {
+                environment name: 'DEPLOY', value: 'true'
+            }
+            steps {
+                container('docker') {
+                    withDockerRegistry([credentialsId: "${REGISTRY_CREDENTIAL}", url: "${REGISTRY_URL}"]) {
+                        sh "docker push ${REGISTRY}:${VERSION}"
+                    }
+                }
+            }
+        }
+    }
+}
